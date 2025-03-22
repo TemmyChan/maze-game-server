@@ -1,22 +1,32 @@
+const http = require("http");
 const WebSocket = require("ws");
 
 const port = process.env.PORT || 10000;
-console.log("サーバーがポート番号", port, "で起動しました");
 
-const server = new WebSocket.Server({ port: port });
+// HTTP サーバーを作成
+const server = http.createServer((req, res) => {
+    res.writeHead(200, {
+        "Content-Type": "text/plain",
+        "X-Content-Type-Options": "nosniff"
+    });
+    res.end("WebSocket サーバー稼働中");
+});
+
+// WebSocket サーバーを HTTP サーバー上に作成
+const wss = new WebSocket.Server({ server });
+
 let players = {};
 
-server.on("connection", (socket) => {
+wss.on("connection", (ws) => {
     console.log("新しいプレイヤーが接続");
 
-    socket.on("message", (data) => {
+    ws.on("message", (data) => {
         const message = JSON.parse(data);
 
         if (message.type === "move") {
             players[message.id] = { x: message.x, y: message.y };
 
-            // すべてのクライアントにプレイヤーの位置を送信
-            server.clients.forEach(client => {
+            wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({ type: "update", players }));
                 }
@@ -24,17 +34,16 @@ server.on("connection", (socket) => {
         }
     });
 
-    socket.on("close", () => {
+    ws.on("close", () => {
         console.log("プレイヤーが退出");
     });
 
-    socket.on("error", (err) => {
-        console.log("WebSocketエラー:", err);
+    ws.on("error", (err) => {
+        console.error("WebSocketエラー:", err);
     });
 });
 
-server.on('error', (err) => {
-    console.log("サーバーエラー:", err);
+// HTTP サーバーを起動
+server.listen(port, () => {
+    console.log(`WebSocket サーバーがポート ${port} で起動しました`);
 });
-
-console.log("WebSocket サーバーが起動しました");
