@@ -1,32 +1,37 @@
-const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
 
-const app = express();
-const port = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000;
 
 // HTTP サーバーを作成
-const server = http.createServer(app);
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("WebSocket server is running.");
+});
 
-// WebSocket サーバーを作成
+// WebSocket サーバーを HTTP サーバーに紐付け
 const wss = new WebSocket.Server({ server });
 
 let players = {};
 
-// WebSocket の接続処理
 wss.on("connection", (ws) => {
     console.log("新しいプレイヤーが接続");
 
     ws.on("message", (data) => {
-        const message = JSON.parse(data);
-        if (message.type === "move") {
-            players[message.id] = { x: message.x, y: message.y };
+        try {
+            const message = JSON.parse(data);
 
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify({ type: "update", players }));
-                }
-            });
+            if (message.type === "move") {
+                players[message.id] = { x: message.x, y: message.y };
+
+                wss.clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({ type: "update", players }));
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("メッセージ解析エラー:", error);
         }
     });
 
@@ -35,18 +40,10 @@ wss.on("connection", (ws) => {
     });
 
     ws.on("error", (err) => {
-        console.error("WebSocketエラー:", err);
+        console.error("WebSocket エラー:", err);
     });
 });
 
-// HTTP のレスポンス設定
-app.use((req, res, next) => {
-    res.setHeader("X-Content-Type-Options", "nosniff"); // 追加
-    res.setHeader("Content-Type", "text/plain");
-    res.status(200).send("WebSocket サーバー稼働中");
-});
-
-// サーバー起動
-server.listen(port, () => {
-    console.log(`WebSocket サーバーがポート ${port} で起動しました`);
+server.listen(PORT, () => {
+    console.log(`WebSocket サーバーがポート ${PORT} で起動しました`);
 });
