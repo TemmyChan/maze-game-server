@@ -1,6 +1,9 @@
 const WebSocket = require("ws");
 
-const server = new WebSocket.Server({ port: process.env.PORT || 8080 });
+const port = process.env.PORT || 8080; // 環境変数が設定されていなければ8080を使用
+console.log("サーバーが起動します。ポート番号:", port);
+
+const server = new WebSocket.Server({ port: port });
 let players = {};
 
 server.on("connection", (socket) => {
@@ -8,7 +11,7 @@ server.on("connection", (socket) => {
 
     socket.on("message", (data) => {
         const message = JSON.parse(data);
-        
+
         if (message.type === "move") {
             players[message.id] = { x: message.x, y: message.y };
 
