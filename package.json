@@ -1,15 +1,19 @@
 {
   "name": "maze-game-server",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Your Name",
   "license": "ISC",
-  "description": "",
+  "description": "WebSocket server for Maze Game",
   "dependencies": {
-    "ws": "^8.18.1"
+    "ws": "^8.18.1",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
